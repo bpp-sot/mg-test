@@ -9,8 +9,14 @@ jobs:
   build:
     permissions:
       contents: write
+      pages: write
+      id-token: write
 
     runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout 🛎️
@@ -28,20 +34,17 @@ jobs:
       - name: Build project 🏗️
         run: npm run build
 
-  deploy:
-    needs: build
+      - name: Checkout code
+        uses: actions/checkout@v5
 
-    permissions:
-      pages: write
-      id-token: write
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: "./dist"
 
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
