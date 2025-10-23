@@ -6,14 +6,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  # -----------------------------
-  # 1. Test job
-  # -----------------------------
-  test:
-    runs-on: ubuntu-latest
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    outputs:
+      build-artifact: ${{ steps.upload.outputs.artifact-id }}
 
     permissions:
-      contents: read
+      contents: write
+      id-token: write
+      pages: write
+
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout 🛎️
@@ -31,38 +37,6 @@ jobs:
       - name: Run tests 🧪
         run: npm test --if-present
 
-  # -----------------------------
-  # 2. Build job
-  # -----------------------------
-  build:
-    needs: test # Depends on the test job running successfully
-
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    # The environment for the deployment
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    outputs:
-      build-artifact: ${{ steps.upload.outputs.artifact-id }}
-
-    steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v5
-
-      - name: Setup Node.js ⚙️
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies 📦
-        run: npm ci
-
       - name: Build project 🏗️
         run: npm run build
 
@@ -75,23 +49,6 @@ jobs:
         with:
           path: ./dist
 
-  # -----------------------------
-  # 3. Deploy job
-  # -----------------------------
-  deploy:
-    needs: build # Depends on the build job running successfully
-
-    permissions:
-      contents: read
-
-    # The environment for the deployment
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Deploy to GitHub Pages 🚀
         id: deployment
         uses: actions/deploy-pages@v4
